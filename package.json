@@ -9,7 +9,10 @@
     "build": "tsc",
     "package": "ncc build --source-map --license licenses.txt",
     "format": "prettier --write .",
-    "lint": "prettier --check ."
+    "lint": "prettier --check .",
+    "publish:patch": "npm version patch",
+    "publish:minor": "npm version minor",
+    "publish:major": "npm version major"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
