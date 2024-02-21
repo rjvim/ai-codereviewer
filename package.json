@@ -10,7 +10,7 @@
     "package": "ncc build --source-map --license licenses.txt",
     "format": "prettier --write .",
     "lint": "prettier --check .",
-    "publish:patch": "npm version patch",
+    "publish:patch": "npm run build && npm run package && npm version patch",
     "publish:minor": "npm version minor",
     "publish:major": "npm version major"
   },
