@@ -234,6 +234,8 @@ async function main() {
     );
   });
 
+  console.log("This is filteredDiff:", filteredDiff);
+
   const comments = await analyzeCode(filteredDiff, prDetails);
   if (comments.length > 0) {
     await createReviewComment(
