@@ -258,7 +258,7 @@ function main() {
         });
         existingComments = existingComments.data;
         for (let comment of existingComments) {
-            if (comment.body.includes("AIC Summary")) {
+            if (comment.body.includes("AICR Summary")) {
                 commentIdToUpdate = comment.id;
                 commentIdBody = comment.body;
                 break;
@@ -292,15 +292,32 @@ function main() {
         if (commentIdToUpdate) {
             // Update the comment
             console.log("Exists -->", commentIdBody, commentIdToUpdate);
+            const newSummary = yield getAISummary(diff, prDetails);
+            yield octokit.issues.updateComment({
+                owner: prDetails.owner,
+                repo: prDetails.repo,
+                comment_id: commentIdToUpdate,
+                body: `
+          ${commentIdBody}
+
+          ${newSummary}
+      `,
+            });
         }
         else {
             // Create the comment
-            const summary = yield getAISummary(diff, prDetails);
+            // If summary doesn't exist create it on full diff, not sync diff
+            let fullDiff = yield getDiff(prDetails.owner, prDetails.repo, prDetails.pull_number);
+            const summary = yield getAISummary(fullDiff, prDetails);
             yield octokit.issues.createComment({
                 owner: prDetails.owner,
                 repo: prDetails.repo,
                 issue_number: prDetails.pull_number,
-                body: summary,
+                body: `
+      # AICR Summary
+      
+      ${summary}
+      `,
             });
         }
         // console.log("This is the diff:", diff);

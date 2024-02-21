@@ -181,7 +181,10 @@ async function createReviewComment(
   });
 }
 
-function createSummaryPrompt(diff: string, prDetails: PRDetails): string {
+function createSummaryPrompt(
+  diff: string | null,
+  prDetails: PRDetails
+): string {
   return `Your task is to review the git diff. Instructions:
 - Do not give positive comments or compliments.
 - Write the comment in GitHub Markdown format.
@@ -206,7 +209,10 @@ ${diff}
 `;
 }
 
-async function getAISummary(diff: string, prDetails: PRDetails): Promise<any> {
+async function getAISummary(
+  diff: string | null,
+  prDetails: PRDetails
+): Promise<any> {
   const queryConfig = {
     model: OPENAI_API_MODEL,
     temperature: 0.2,
@@ -266,7 +272,7 @@ async function main() {
   existingComments = existingComments.data;
 
   for (let comment of existingComments) {
-    if (comment.body.includes("AIC Summary")) {
+    if (comment.body.includes("AICR Summary")) {
       commentIdToUpdate = comment.id;
       commentIdBody = comment.body;
       break;
@@ -307,14 +313,37 @@ async function main() {
   if (commentIdToUpdate) {
     // Update the comment
     console.log("Exists -->", commentIdBody, commentIdToUpdate);
+
+    const newSummary = await getAISummary(diff, prDetails);
+
+    await octokit.issues.updateComment({
+      owner: prDetails.owner,
+      repo: prDetails.repo,
+      comment_id: commentIdToUpdate,
+      body: `
+          ${commentIdBody}
+
+          ${newSummary}
+      `,
+    });
   } else {
     // Create the comment
-    const summary = await getAISummary(diff, prDetails);
+    // If summary doesn't exist create it on full diff, not sync diff
+    let fullDiff: string | null = await getDiff(
+      prDetails.owner,
+      prDetails.repo,
+      prDetails.pull_number
+    );
+    const summary = await getAISummary(fullDiff, prDetails);
     await octokit.issues.createComment({
       owner: prDetails.owner,
       repo: prDetails.repo,
       issue_number: prDetails.pull_number,
-      body: summary,
+      body: `
+      # AICR Summary
+      
+      ${summary}
+      `,
     });
   }
 
