@@ -297,11 +297,8 @@ function main() {
                 owner: prDetails.owner,
                 repo: prDetails.repo,
                 comment_id: commentIdToUpdate,
-                body: `
-          ${commentIdBody}
-
-          ${newSummary}
-      `,
+                body: `${commentIdBody}
+${newSummary}`,
             });
         }
         else {
@@ -313,11 +310,8 @@ function main() {
                 owner: prDetails.owner,
                 repo: prDetails.repo,
                 issue_number: prDetails.pull_number,
-                body: `
-      # AICR Summary
-      
-      ${summary}
-      `,
+                body: `# AICR Summary
+${summary}`,
             });
         }
         // console.log("This is the diff:", diff);
