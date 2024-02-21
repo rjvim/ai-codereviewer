@@ -190,7 +190,6 @@ function createSummaryPrompt(
 - Write the comment in GitHub Markdown format.
 - Provide a summary of changes done, and what it supposedly doing
 - Provide potential side effects, typos, bugs as a markdown checklist
-- Also start the title of the summary with current date and time to differentiate between various summaries. Keep the title starting with ### for heading, and also make the date human readable.
 - IMPORTANT: NEVER suggest adding comments to the code.
 - Take the pull request title and description into account when writing the response.
   
@@ -321,6 +320,7 @@ async function main() {
       repo: prDetails.repo,
       comment_id: commentIdToUpdate,
       body: `${commentIdBody}
+## Summary at ${new Date()}
 ${newSummary}`,
     });
   } else {
@@ -337,6 +337,7 @@ ${newSummary}`,
       repo: prDetails.repo,
       issue_number: prDetails.pull_number,
       body: `# AICR Summary
+## Summary at ${new Date()}
 ${summary}`,
     });
   }
