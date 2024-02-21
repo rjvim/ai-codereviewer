@@ -192,6 +192,7 @@ function createSummaryPrompt(diff, prDetails) {
 - Write the comment in GitHub Markdown format.
 - Provide a summary of changes done, and what it supposedly doing
 - Provide potential side effects, typos, bugs as a markdown checklist
+- Also start the title of the summary with current date and time to differentiate between various summaries
 - IMPORTANT: NEVER suggest adding comments to the code.
 - Take the pull request title and description into account when writing the response.
   
@@ -276,6 +277,12 @@ function main() {
         // console.log("This is the diff:", diff);
         const summary = yield getAISummary(diff, prDetails);
         console.log("This is the summary:", summary);
+        yield octokit.issues.createComment({
+            owner: prDetails.owner,
+            repo: prDetails.repo,
+            issue_number: prDetails.pull_number,
+            body: summary,
+        });
         const parsedDiff = (0, parse_diff_1.default)(diff);
         const excludePatterns = core
             .getInput("exclude")
