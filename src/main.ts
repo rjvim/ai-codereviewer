@@ -254,6 +254,25 @@ async function main() {
     readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8")
   );
 
+  let commentIdToUpdate = null;
+  let commentIdBody = null;
+
+  let existingComments: any = await octokit.issues.listComments({
+    owner: prDetails.owner,
+    repo: prDetails.repo,
+    issue_number: prDetails.pull_number,
+  });
+
+  existingComments = existingComments.data;
+
+  for (let comment of existingComments) {
+    if (comment.body.includes("AIC Summary")) {
+      commentIdToUpdate = comment.id;
+      commentIdBody = comment.body;
+      break;
+    }
+  }
+
   if (eventData.action === "opened") {
     diff = await getDiff(
       prDetails.owner,
@@ -285,16 +304,21 @@ async function main() {
     return;
   }
 
-  // console.log("This is the diff:", diff);
-  const summary = await getAISummary(diff, prDetails);
-  console.log("This is the summary:", summary);
+  if (commentIdToUpdate) {
+    // Update the comment
+    console.log("Exists -->", commentIdBody, commentIdToUpdate);
+  } else {
+    // Create the comment
+    const summary = await getAISummary(diff, prDetails);
+    await octokit.issues.createComment({
+      owner: prDetails.owner,
+      repo: prDetails.repo,
+      issue_number: prDetails.pull_number,
+      body: summary,
+    });
+  }
 
-  await octokit.issues.createComment({
-    owner: prDetails.owner,
-    repo: prDetails.repo,
-    issue_number: prDetails.pull_number,
-    body: summary,
-  });
+  // console.log("This is the diff:", diff);
 
   const parsedDiff = parseDiff(diff);
 

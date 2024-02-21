@@ -249,6 +249,21 @@ function main() {
         const prDetails = yield getPRDetails();
         let diff;
         const eventData = JSON.parse((0, fs_1.readFileSync)((_a = process.env.GITHUB_EVENT_PATH) !== null && _a !== void 0 ? _a : "", "utf8"));
+        let commentIdToUpdate = null;
+        let commentIdBody = null;
+        let existingComments = yield octokit.issues.listComments({
+            owner: prDetails.owner,
+            repo: prDetails.repo,
+            issue_number: prDetails.pull_number,
+        });
+        existingComments = existingComments.data;
+        for (let comment of existingComments) {
+            if (comment.body.includes("AIC Summary")) {
+                commentIdToUpdate = comment.id;
+                commentIdBody = comment.body;
+                break;
+            }
+        }
         if (eventData.action === "opened") {
             diff = yield getDiff(prDetails.owner, prDetails.repo, prDetails.pull_number);
         }
@@ -274,15 +289,21 @@ function main() {
             console.log("No diff found");
             return;
         }
+        if (commentIdToUpdate) {
+            // Update the comment
+            console.log("Exists -->", commentIdBody, commentIdToUpdate);
+        }
+        else {
+            // Create the comment
+            const summary = yield getAISummary(diff, prDetails);
+            yield octokit.issues.createComment({
+                owner: prDetails.owner,
+                repo: prDetails.repo,
+                issue_number: prDetails.pull_number,
+                body: summary,
+            });
+        }
         // console.log("This is the diff:", diff);
-        const summary = yield getAISummary(diff, prDetails);
-        console.log("This is the summary:", summary);
-        yield octokit.issues.createComment({
-            owner: prDetails.owner,
-            repo: prDetails.repo,
-            issue_number: prDetails.pull_number,
-            body: summary,
-        });
         const parsedDiff = (0, parse_diff_1.default)(diff);
         const excludePatterns = core
             .getInput("exclude")
