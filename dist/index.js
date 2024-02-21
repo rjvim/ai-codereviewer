@@ -192,7 +192,7 @@ function createSummaryPrompt(diff, prDetails) {
 - Write the comment in GitHub Markdown format.
 - Provide a summary of changes done, and what it supposedly doing
 - Provide potential side effects, typos, bugs as a markdown checklist
-- Also start the title of the summary with current date and time to differentiate between various summaries
+- Also start the title of the summary with current date and time to differentiate between various summaries. Keep the title starting with ### for heading, and also make the date human readable.
 - IMPORTANT: NEVER suggest adding comments to the code.
 - Take the pull request title and description into account when writing the response.
   
@@ -291,7 +291,7 @@ function main() {
         }
         if (commentIdToUpdate) {
             // Update the comment
-            console.log("Exists -->", commentIdBody, commentIdToUpdate);
+            // console.log("Exists -->", commentIdBody, commentIdToUpdate);
             const newSummary = yield getAISummary(diff, prDetails);
             yield octokit.issues.updateComment({
                 owner: prDetails.owner,
