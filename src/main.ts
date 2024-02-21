@@ -217,7 +217,7 @@ async function getAISummary(diff: string, prDetails: PRDetails): Promise<any> {
 
   const prompt = await createSummaryPrompt(diff, prDetails);
 
-  console.log("getAISummary prompt", prompt);
+  // console.log("getAISummary prompt", prompt);
 
   try {
     const response = await openai.chat.completions.create({
@@ -234,10 +234,12 @@ async function getAISummary(diff: string, prDetails: PRDetails): Promise<any> {
       ],
     });
 
-    const res = response.choices[0].message?.content?.trim() || "{}";
-    console.log("getAISummary -->", res);
+    const res = response.choices[0].message?.content?.trim() || "";
+    // console.log("getAISummary -->", res);
 
-    return JSON.parse(res).reviews;
+    return res;
+
+    // return JSON.parse(res).reviews;
   } catch (error) {
     console.error("Error:", error);
     return null;
@@ -284,6 +286,7 @@ async function main() {
 
   // console.log("This is the diff:", diff);
   const summary = await getAISummary(diff, prDetails);
+  console.log("This is the summary:", summary);
 
   const parsedDiff = parseDiff(diff);
 

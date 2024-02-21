@@ -221,7 +221,7 @@ function getAISummary(diff, prDetails) {
             presence_penalty: 0,
         };
         const prompt = yield createSummaryPrompt(diff, prDetails);
-        console.log("getAISummary prompt", prompt);
+        // console.log("getAISummary prompt", prompt);
         try {
             const response = yield openai.chat.completions.create(Object.assign(Object.assign(Object.assign({}, queryConfig), (OPENAI_API_MODEL === "gpt-4-1106-preview"
                 ? { response_format: { type: "json_object" } }
@@ -231,9 +231,10 @@ function getAISummary(diff, prDetails) {
                         content: prompt,
                     },
                 ] }));
-            const res = ((_b = (_a = response.choices[0].message) === null || _a === void 0 ? void 0 : _a.content) === null || _b === void 0 ? void 0 : _b.trim()) || "{}";
-            console.log("getAISummary -->", res);
-            return JSON.parse(res).reviews;
+            const res = ((_b = (_a = response.choices[0].message) === null || _a === void 0 ? void 0 : _a.content) === null || _b === void 0 ? void 0 : _b.trim()) || "";
+            // console.log("getAISummary -->", res);
+            return res;
+            // return JSON.parse(res).reviews;
         }
         catch (error) {
             console.error("Error:", error);
@@ -274,6 +275,7 @@ function main() {
         }
         // console.log("This is the diff:", diff);
         const summary = yield getAISummary(diff, prDetails);
+        console.log("This is the summary:", summary);
         const parsedDiff = (0, parse_diff_1.default)(diff);
         const excludePatterns = core
             .getInput("exclude")
