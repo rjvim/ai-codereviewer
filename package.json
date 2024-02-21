@@ -1,6 +1,6 @@
 {
   "name": "open-ai-reviewer",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Open AI powered code reviews",
   "main": "lib/main.js",
   "author": "Ville Saukkonen",
