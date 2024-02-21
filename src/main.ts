@@ -234,9 +234,9 @@ async function getAISummary(diff: string, prDetails: PRDetails): Promise<any> {
       ],
     });
 
-    console.log("getAISummary -->", response);
-
     const res = response.choices[0].message?.content?.trim() || "{}";
+    console.log("getAISummary -->", res);
+
     return JSON.parse(res).reviews;
   } catch (error) {
     console.error("Error:", error);
