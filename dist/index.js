@@ -186,6 +186,61 @@ function createReviewComment(owner, repo, pull_number, comments) {
         });
     });
 }
+function createSummaryPrompt(diff, prDetails) {
+    return `Your task is to review the git diff. Instructions:
+- Do not give positive comments or compliments.
+- Write the comment in GitHub Markdown format.
+- Provide a summary of changes done, and what it supposedly doing
+- Provide potential side effects, typos, bugs as a markdown checklist
+- IMPORTANT: NEVER suggest adding comments to the code.
+- Take the pull request title and description into account when writing the response.
+  
+Pull request title: ${prDetails.title}
+Pull request description:
+
+---
+${prDetails.description}
+---
+
+Git diff to review:
+
+\`\`\`diff
+${diff}
+\`\`\`
+`;
+}
+function getAISummary(diff, prDetails) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+        const queryConfig = {
+            model: OPENAI_API_MODEL,
+            temperature: 0.2,
+            max_tokens: 700,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+        };
+        const prompt = yield createSummaryPrompt(diff, prDetails);
+        console.log("getAISummary prompt", prompt);
+        try {
+            const response = yield openai.chat.completions.create(Object.assign(Object.assign(Object.assign({}, queryConfig), (OPENAI_API_MODEL === "gpt-4-1106-preview"
+                ? { response_format: { type: "json_object" } }
+                : {})), { messages: [
+                    {
+                        role: "system",
+                        content: prompt,
+                    },
+                ] }));
+            console.log("getAISummary -->", response);
+            const res = ((_b = (_a = response.choices[0].message) === null || _a === void 0 ? void 0 : _a.content) === null || _b === void 0 ? void 0 : _b.trim()) || "{}";
+            return JSON.parse(res).reviews;
+        }
+        catch (error) {
+            console.error("Error:", error);
+            return null;
+        }
+    });
+}
 function main() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
@@ -217,7 +272,8 @@ function main() {
             console.log("No diff found");
             return;
         }
-        console.log("This is the diff:", diff);
+        // console.log("This is the diff:", diff);
+        const summary = yield getAISummary(diff, prDetails);
         const parsedDiff = (0, parse_diff_1.default)(diff);
         const excludePatterns = core
             .getInput("exclude")
@@ -226,7 +282,6 @@ function main() {
         const filteredDiff = parsedDiff.filter((file) => {
             return !excludePatterns.some((pattern) => { var _a; return (0, minimatch_1.default)((_a = file.to) !== null && _a !== void 0 ? _a : "", pattern); });
         });
-        console.log("This is filteredDiff:", filteredDiff);
         const comments = yield analyzeCode(filteredDiff, prDetails);
         if (comments.length > 0) {
             yield createReviewComment(prDetails.owner, prDetails.repo, prDetails.pull_number, comments);

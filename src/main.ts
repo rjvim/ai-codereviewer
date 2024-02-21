@@ -181,6 +181,69 @@ async function createReviewComment(
   });
 }
 
+function createSummaryPrompt(diff: string, prDetails: PRDetails): string {
+  return `Your task is to review the git diff. Instructions:
+- Do not give positive comments or compliments.
+- Write the comment in GitHub Markdown format.
+- Provide a summary of changes done, and what it supposedly doing
+- Provide potential side effects, typos, bugs as a markdown checklist
+- IMPORTANT: NEVER suggest adding comments to the code.
+- Take the pull request title and description into account when writing the response.
+  
+Pull request title: ${prDetails.title}
+Pull request description:
+
+---
+${prDetails.description}
+---
+
+Git diff to review:
+
+\`\`\`diff
+${diff}
+\`\`\`
+`;
+}
+
+async function getAISummary(diff: string, prDetails: PRDetails): Promise<any> {
+  const queryConfig = {
+    model: OPENAI_API_MODEL,
+    temperature: 0.2,
+    max_tokens: 700,
+    top_p: 1,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+  };
+
+  const prompt = await createSummaryPrompt(diff, prDetails);
+
+  console.log("getAISummary prompt", prompt);
+
+  try {
+    const response = await openai.chat.completions.create({
+      ...queryConfig,
+      // return JSON if the model supports it:
+      ...(OPENAI_API_MODEL === "gpt-4-1106-preview"
+        ? { response_format: { type: "json_object" } }
+        : {}),
+      messages: [
+        {
+          role: "system",
+          content: prompt,
+        },
+      ],
+    });
+
+    console.log("getAISummary -->", response);
+
+    const res = response.choices[0].message?.content?.trim() || "{}";
+    return JSON.parse(res).reviews;
+  } catch (error) {
+    console.error("Error:", error);
+    return null;
+  }
+}
+
 async function main() {
   const prDetails = await getPRDetails();
   let diff: string | null;
@@ -219,7 +282,8 @@ async function main() {
     return;
   }
 
-  console.log("This is the diff:", diff);
+  // console.log("This is the diff:", diff);
+  const summary = await getAISummary(diff, prDetails);
 
   const parsedDiff = parseDiff(diff);
 
@@ -233,8 +297,6 @@ async function main() {
       minimatch(file.to ?? "", pattern)
     );
   });
-
-  console.log("This is filteredDiff:", filteredDiff);
 
   const comments = await analyzeCode(filteredDiff, prDetails);
   if (comments.length > 0) {
