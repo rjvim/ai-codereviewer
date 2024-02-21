@@ -321,8 +321,8 @@ async function main() {
         repo: prDetails.repo,
         comment_id: commentIdToUpdate,
         body: `${commentIdBody}
-  ## Summary at ${new Date()}
-  ${newSummary}`,
+## Summary at ${new Date()}
+${newSummary}`,
       });
     } else {
       // Create the comment
@@ -338,8 +338,8 @@ async function main() {
         repo: prDetails.repo,
         issue_number: prDetails.pull_number,
         body: `# AICR Summary
-  ## Summary at ${new Date()}
-  ${summary}`,
+## Summary at ${new Date()}
+${summary}`,
       });
     }
   } catch (error) {
