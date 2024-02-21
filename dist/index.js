@@ -288,32 +288,37 @@ function main() {
             console.log("No diff found");
             return;
         }
-        if (commentIdToUpdate) {
-            // Update the comment
-            // console.log("Exists -->", commentIdBody, commentIdToUpdate);
-            const newSummary = yield getAISummary(diff, prDetails);
-            yield octokit.issues.updateComment({
-                owner: prDetails.owner,
-                repo: prDetails.repo,
-                comment_id: commentIdToUpdate,
-                body: `${commentIdBody}
-## Summary at ${new Date()}
-${newSummary}`,
-            });
+        try {
+            if (commentIdToUpdate) {
+                // Update the comment
+                // console.log("Exists -->", commentIdBody, commentIdToUpdate);
+                const newSummary = yield getAISummary(diff, prDetails);
+                yield octokit.issues.updateComment({
+                    owner: prDetails.owner,
+                    repo: prDetails.repo,
+                    comment_id: commentIdToUpdate,
+                    body: `${commentIdBody}
+  ## Summary at ${new Date()}
+  ${newSummary}`,
+                });
+            }
+            else {
+                // Create the comment
+                // If summary doesn't exist create it on full diff, not sync diff
+                let fullDiff = yield getDiff(prDetails.owner, prDetails.repo, prDetails.pull_number);
+                const summary = yield getAISummary(fullDiff, prDetails);
+                yield octokit.issues.createComment({
+                    owner: prDetails.owner,
+                    repo: prDetails.repo,
+                    issue_number: prDetails.pull_number,
+                    body: `# AICR Summary
+  ## Summary at ${new Date()}
+  ${summary}`,
+                });
+            }
         }
-        else {
-            // Create the comment
-            // If summary doesn't exist create it on full diff, not sync diff
-            let fullDiff = yield getDiff(prDetails.owner, prDetails.repo, prDetails.pull_number);
-            const summary = yield getAISummary(fullDiff, prDetails);
-            yield octokit.issues.createComment({
-                owner: prDetails.owner,
-                repo: prDetails.repo,
-                issue_number: prDetails.pull_number,
-                body: `# AICR Summary
-## Summary at ${new Date()}
-${summary}`,
-            });
+        catch (error) {
+            console.log("Failed to create AICR Summary. Too big a diff.");
         }
         // console.log("This is the diff:", diff);
         const parsedDiff = (0, parse_diff_1.default)(diff);

@@ -309,37 +309,41 @@ async function main() {
     return;
   }
 
-  if (commentIdToUpdate) {
-    // Update the comment
-    // console.log("Exists -->", commentIdBody, commentIdToUpdate);
+  try {
+    if (commentIdToUpdate) {
+      // Update the comment
+      // console.log("Exists -->", commentIdBody, commentIdToUpdate);
 
-    const newSummary = await getAISummary(diff, prDetails);
+      const newSummary = await getAISummary(diff, prDetails);
 
-    await octokit.issues.updateComment({
-      owner: prDetails.owner,
-      repo: prDetails.repo,
-      comment_id: commentIdToUpdate,
-      body: `${commentIdBody}
-## Summary at ${new Date()}
-${newSummary}`,
-    });
-  } else {
-    // Create the comment
-    // If summary doesn't exist create it on full diff, not sync diff
-    let fullDiff: string | null = await getDiff(
-      prDetails.owner,
-      prDetails.repo,
-      prDetails.pull_number
-    );
-    const summary = await getAISummary(fullDiff, prDetails);
-    await octokit.issues.createComment({
-      owner: prDetails.owner,
-      repo: prDetails.repo,
-      issue_number: prDetails.pull_number,
-      body: `# AICR Summary
-## Summary at ${new Date()}
-${summary}`,
-    });
+      await octokit.issues.updateComment({
+        owner: prDetails.owner,
+        repo: prDetails.repo,
+        comment_id: commentIdToUpdate,
+        body: `${commentIdBody}
+  ## Summary at ${new Date()}
+  ${newSummary}`,
+      });
+    } else {
+      // Create the comment
+      // If summary doesn't exist create it on full diff, not sync diff
+      let fullDiff: string | null = await getDiff(
+        prDetails.owner,
+        prDetails.repo,
+        prDetails.pull_number
+      );
+      const summary = await getAISummary(fullDiff, prDetails);
+      await octokit.issues.createComment({
+        owner: prDetails.owner,
+        repo: prDetails.repo,
+        issue_number: prDetails.pull_number,
+        body: `# AICR Summary
+  ## Summary at ${new Date()}
+  ${summary}`,
+      });
+    }
+  } catch (error) {
+    console.log("Failed to create AICR Summary. Too big a diff.");
   }
 
   // console.log("This is the diff:", diff);
