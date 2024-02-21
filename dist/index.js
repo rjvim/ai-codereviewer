@@ -226,6 +226,7 @@ function main() {
         const filteredDiff = parsedDiff.filter((file) => {
             return !excludePatterns.some((pattern) => { var _a; return (0, minimatch_1.default)((_a = file.to) !== null && _a !== void 0 ? _a : "", pattern); });
         });
+        console.log("This is filteredDiff:", filteredDiff);
         const comments = yield analyzeCode(filteredDiff, prDetails);
         if (comments.length > 0) {
             yield createReviewComment(prDetails.owner, prDetails.repo, prDetails.pull_number, comments);
