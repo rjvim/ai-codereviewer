@@ -217,6 +217,7 @@ function main() {
             console.log("No diff found");
             return;
         }
+        console.log("This is the diff:", diff);
         const parsedDiff = (0, parse_diff_1.default)(diff);
         const excludePatterns = core
             .getInput("exclude")
